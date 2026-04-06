@@ -14,17 +14,20 @@ import uuid
 import cloudinary
 import cloudinary.uploader
 
+# Import des modèles et utilitaires
 from models import *
 from utils import *
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Configuration MongoDB
 mongo_url = os.environ['MONGO_URL']
 db_name = os.environ['DB_NAME']
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
 
+# Configuration Cloudinary
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
@@ -36,6 +39,7 @@ ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "pauledoux@protonmail.com")
 app = FastAPI(title="Bor-bi Tech API", version="1.0.0")
 api_router = APIRouter(prefix="/api")
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -48,7 +52,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# AUTHENTIFICATION
+# ROUTES D'AUTHENTIFICATION
 # ============================================================================
 
 @api_router.post("/auth/register")
@@ -136,7 +140,7 @@ async def verify_otp(otp_verify: OtpVerify):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
-# PRODUITS
+# ROUTES PRODUITS
 # ============================================================================
 
 def serialize_doc(doc):
@@ -164,7 +168,7 @@ async def get_default_products(category: Optional[str] = None, search: Optional[
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
-# UPLOAD IMAGES
+# ROUTES UPLOAD IMAGES
 # ============================================================================
 
 @api_router.post("/upload-image")
@@ -192,7 +196,7 @@ async def upload_product_image(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
-# HEALTH
+# ROUTE RACINE & HEALTH
 # ============================================================================
 
 @api_router.get("/")
