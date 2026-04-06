@@ -83,23 +83,32 @@ async def register(user_data: UserCreate):
 @api_router.post("/auth/login")
 async def login(credentials: UserLogin):
     try:
+        print("=== LOGIN ATTEMPT ===")
+        print("Identifier:", credentials.identifier)
+        print("Password:", credentials.password)
+        
         user = await db.users.find_one({
             "$or": [{"email": credentials.identifier}, {"phone": credentials.identifier}]
         })
+        
         if not user:
+            print("User not found")
             raise HTTPException(status_code=401, detail="Identifiants invalides")
-        if not user.get("passwordHash"):
-            raise HTTPException(status_code=401, detail="Mot de passe non configuré")
+        
+        print("User found:", user.get("email"))
+        print("Hash in DB:", user.get("passwordHash"))
+        
         if not verify_password(credentials.password, user["passwordHash"]):
+            print("Password verification failed")
             raise HTTPException(status_code=401, detail="Identifiants invalides")
+        
         token = create_jwt_token(user["id"], user["role"], user.get("email"), user.get("phone"))
-        await log_audit(db, user["id"], user.get("email") or user.get("phone"), "login")
         return {"message": "Connexion réussie", "token": token, "user": user}
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Erreur login: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"UNEXPECTED ERROR: {type(e).__name__} - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
 
 @api_router.post("/auth/request-otp")
 async def request_otp(otp_request: OtpRequest):
